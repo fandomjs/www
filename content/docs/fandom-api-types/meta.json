@@ -1,0 +1,10 @@
+{
+  "title": "fandom-api-types",
+  "description": "Working with fandom-api-types.",
+  "root": true,
+  "icon": "FileBox",
+  "pages": [
+    "index",
+    "reference"
+  ]
+}

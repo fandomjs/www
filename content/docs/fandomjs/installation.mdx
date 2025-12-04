@@ -1,0 +1,98 @@
+---
+title: Installation & Setup
+description: Install fandom.js, configure the MediaWiki host, and run your first request.
+---
+
+## Requirements
+
+1. **Node.js 18 or newer.** The package uses ESM syntax and relies on the global `fetch` implementation that
+   ships with modern Node.
+2. **Wiki host URL.** Point `Client` at any community, e.g. `https://sonic.fandom.com`. When you self-host a
+   MediaWiki install, pass that origin instead.
+3. **Account credentials (optional).** Reading public data does not require authentication. Editing,
+   protecting, or blocking users does, so plan on storing a username/password with the needed rights.
+
+## Install the dependency
+
+<Tabs items={['pnpm', 'npm', 'yarn', 'bun']} groupId="install-client">
+  <Tab value="pnpm">
+
+```bash
+pnpm add fandom.js
+```
+
+  </Tab>
+  <Tab value="npm">
+
+```bash
+npm install fandom.js
+```
+
+  </Tab>
+  <Tab value="yarn">
+
+```bash
+yarn add fandom.js
+```
+
+  </Tab>
+  <Tab value="bun">
+
+```bash
+bun add fandom.js
+```
+
+  </Tab>
+</Tabs>
+
+The published package already contains compiled `.js`/`.d.ts` artifacts so there is no build step after
+installing.
+
+## Configure the client
+
+```ts
+import { Client } from 'fandom.js';
+
+export const client = new Client({
+  host: 'https://wingsoffire.fandom.com',
+  apiPath: '/api.php',
+  polling: true,
+  cacheSize: 250,
+});
+```
+
+- `host` is mandatory and should include the protocol.
+- `apiPath` can point to a custom entry point if your wiki proxies MediaWiki somewhere else.
+- `cacheSize` controls the in-memory `lru-cache` that powers page/user/revision memoization.
+- `polling` enables the `EventManager` so you automatically receive `pageUpdate` and other change events.
+
+## Logging in (only when needed)
+
+```ts
+async function bootstrap() {
+  await client.login('BotAccount', process.env.FANDOM_PASSWORD);
+  client.events.on('ready', () => console.log('Logged in and polling RecentChanges'));
+}
+
+bootstrap();
+```
+
+Providing credentials triggers a login token request (`TokenType.Login`) followed by a POST to the wiki's
+`action=login`. Cookies returned by the API are cached on the client instance so subsequent edits can reuse
+the same session.
+
+## Verify the connection
+
+```ts
+const summary = await client.meta.fetchSiteInfo('general|statistics');
+console.log(summary.general?.sitename);
+
+const searchResults = await client.search.search('Moonwatcher', 3);
+console.log(searchResults);
+```
+
+If the promise rejects, double-check the following:
+
+- The host actually serves MediaWiki (requests should land on `/api.php`).
+- Your machine can resolve and reach the wiki over HTTPS.
+- Logged-in operations require a user with edit/move/delete rights; otherwise MediaWiki returns an `APIError`.

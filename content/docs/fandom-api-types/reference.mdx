@@ -1,0 +1,65 @@
+---
+title: Type Reference
+description: Detailed breakdown of the most commonly imported interfaces and enums.
+---
+
+## API primitives
+
+```ts
+import type { APIResponse, QueryParams } from 'fandom.js';
+```
+
+- `APIResponse<T>` mirrors the MediaWiki `action=query` envelope. The generic type represents the `query` key.
+- `QueryParams` is a loose record of parameters accepted by `RequestManager.get`/`post`.
+
+## Structures
+
+```ts
+import type { APIPage, APIRevision, APIUser } from 'fandom.js';
+```
+
+- `APIPage` surfaces `pageid`, namespace, title, extracts, revisions, and categories exactly as MediaWiki sends
++  them.
+- `APIRevision` includes the raw `*` content as well as slot-aware data for wikis that use Multi-Content Revisions.
+- `APIUser` exposes `userid`, `name`, `groups`, and registration timestamps to help you build moderation tools.
+
+## Events
+
+```ts
+import type {
+  PageSummary,
+  RecentChange,
+  FileUploadEvent,
+  UserBlockEvent,
+} from 'fandom.js';
+```
+
+These types flow through `client.events` listeners so you always get the correct properties when reacting to
+polling updates.
+
+## Site info
+
+```ts
+import type { SiteInfo } from 'fandom.js';
+```
+
+`SiteInfo` is a superset of the objects returned by `meta=siteinfo`. It contains optional `general`, `statistics`,
+`namespaces`, and more. Because every key is optional, TypeScript will remind you to null-check fields before
+using them in your UI.
+
+## Enums
+
+```ts
+import { TokenType, ProtectionLevel, Namespace } from 'fandom.js';
+```
+
+- `TokenType` lists the valid MediaWiki tokens you can request (`csrf`, `login`, `rollback`, etc.).
+- `ProtectionLevel` maps to built-in MediaWiki protection levels (`sysop`, `autoconfirmed`).
+- `Namespace` gives you numeric namespace constants when building queries.
+
+## Tips
+
+- Re-export your frequently used types from your own package so application code does not have to remember where
++  each interface lives.
+- When you stub the API in tests, build helper factories that return `APIResponse` instances. That way you keep
++  parity with the data shapes fandom.js expects.

@@ -1,0 +1,71 @@
+---
+title: Events & Polling
+description: Subscribe to RecentChanges, react to emitted events, and control the EventManager lifecycle.
+---
+
+## Available events
+
+`EventManager` extends a typed `EventEmitter`. Listen to whichever events matter to your tooling:
+
+| Event | Payload | When it fires |
+| --- | --- | --- |
+| `ready` | `[]` | The client finished setup (after `login` if credentials are provided).
+| `warn` | `[Error]` | A recoverable issue occurred while polling RecentChanges.
+| `pageFetched` | `[PageSummary]` | A page was fetched via `client.pages.fetch`.
+| `pageUpdate` | `[RecentChange]` | An existing page was edited.
+| `pageCreate` | `[RecentChange]` | A brand-new page was created.
+| `fileUpload` | `[FileUploadEvent]` | Someone uploaded or re-uploaded a file.
+| `userBlock` | `[UserBlockEvent]` | A user was blocked through the wiki UI or API.
+
+```ts
+client.events.on('pageUpdate', (change) => {
+  console.log(`${change.title} edited by ${change.user}`);
+});
+
+client.events.on('fileUpload', (file) => {
+  mediaQueue.enqueue({ title: file.title, by: file.user });
+});
+```
+
+## Controlling the poller
+
+```ts
+client.events.startPolling(2_000); // poll every 2 seconds instead of the default 5
+
+process.on('SIGTERM', () => {
+  client.events.stopPolling();
+});
+```
+
+- Polling is automatically enabled when `client.options.polling !== false`.
+- Calling `startPolling` twice is a no-op; the manager keeps a single interval handle.
+- `stopPolling` clears the interval and can be called safely multiple times.
+
+## Filtering noise
+
+The poller tracks the timestamp of the last seen change and skips anything older. To add your own filters,
+inspect the payload MediaWiki returns:
+
+```ts
+client.events.on('pageUpdate', (change) => {
+  if (!change.comment?.includes('bot')) return;
+  botActivityLogger.info(change);
+});
+```
+
+## Integrating with queues
+
+RecentChanges events are ideal for background jobs. Combine them with your preferred queue to fan out work:
+
+```ts
+client.events.on('pageCreate', (change) => {
+  queue.publish('page-created', {
+    title: change.title,
+    revid: change.revid,
+    timestamp: change.timestamp,
+  });
+});
+```
+
+Because the event payloads are typed (`RecentChange`, `FileUploadEvent`, etc.), you maintain full type safety
+without hand-written interfaces.

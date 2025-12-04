@@ -1,0 +1,117 @@
+---
+title: UI Recipes
+description: Assemble polished experiences on top of fandom.js data primitives.
+---
+
+## Component starter kit
+
+<Cards>
+  <Card
+    title="Hero Banner"
+    description="Promote a universe with live stats, release countdowns, and call-to-action buttons."
+    href="#hero-banner"
+  />
+  <Card
+    title="Watchlist Grid"
+    description="Merge catalog data with fan reactions to personalize carousels."
+    href="#watchlist-grid"
+  />
+  <Card
+    title="Engagement Panel"
+    description="Display reactions, comments, and KPIs for editorial teams."
+    href="#engagement-panel"
+  />
+</Cards>
+
+## Hero banner
+
+```tsx
+import Image from 'next/image';
+import { fandom } from '@/fandom-client';
+
+export async function Hero({ slug }: { slug: string }) {
+  const universe = await fandom.catalog.getUniverse({ slug });
+  return (
+    <section className="rounded-3xl bg-gradient-to-r from-indigo-600 to-purple-500 text-white p-8">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center">
+        <Image src={universe.cover.url} alt={universe.title} width={320} height={180} />
+        <div className="space-y-3">
+          <p className="uppercase tracking-wide text-sm">{universe.genre}</p>
+          <h1 className="text-4xl font-semibold">{universe.title}</h1>
+          <p className="text-lg text-white/80">{universe.description.slice(0, 140)}...</p>
+          <div className="flex gap-3">
+            <button className="btn btn--primary">Add to Watchlist</button>
+            <button className="btn btn--ghost">View Lore</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+```
+
+## Watchlist grid
+
+```tsx
+import { fandom } from '@/fandom-client';
+
+export async function Watchlist({ fanId }: { fanId: string }) {
+  const [watchlist, reactions] = await Promise.all([
+    fandom.catalog.listWatchlist({ fanId }),
+    fandom.reactions.listForFan({ fanId }),
+  ]);
+
+  return (
+    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {watchlist.items.map((item) => {
+        const reaction = reactions.items.find((entry) => entry.entityId === item.entityId);
+        return (
+          <li key={item.entityId} className="rounded-2xl border border-white/10 p-4 bg-white/5">
+            <p className="text-sm text-white/70">{item.type}</p>
+            <p className="text-xl font-semibold">{item.metadata.title}</p>
+            <p className="text-sm text-white/60">{reaction?.value ?? 'No reaction yet'}</p>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+```
+
+## Engagement panel
+
+```tsx
+import { fandom } from '@/fandom-client';
+
+export async function EngagementPanel({ universeId }: { universeId: string }) {
+  const [metrics, sentiment] = await Promise.all([
+    fandom.insights.getUniverseMetrics({ universeId }),
+    fandom.reactions.aggregate({ entityId: universeId }),
+  ]);
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+      <h2 className="text-2xl font-semibold">Engagement</h2>
+      <dl className="mt-4 grid gap-4 sm:grid-cols-3">
+        <div>
+          <dt className="text-slate-500">Active fans (24h)</dt>
+          <dd className="text-3xl font-bold">{metrics.activeFans24h.toLocaleString()}</dd>
+        </div>
+        <div>
+          <dt className="text-slate-500">Completion rate</dt>
+          <dd className="text-3xl font-bold">{metrics.completionRate}%</dd>
+        </div>
+        <div>
+          <dt className="text-slate-500">Mood</dt>
+          <dd className="text-3xl font-bold">{sentiment.mode ?? 'Balanced'}</dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
+```
+
+<Callout type="tip">
+  Pair these components with the design tokens shipped in `@fandom/theme` to stay aligned with our official
+  product surfaces.
+</Callout>

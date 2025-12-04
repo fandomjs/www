@@ -1,0 +1,96 @@
+---
+title: Fandom.js Overview
+description: Understand what ships in the fandom.js package, who it is for, and how the pieces fit together.
+---
+
+Fandom.js is a lightweight, fully typed client for MediaWiki and Fandom wikis. It wraps the `action=query`
+and `Articles/Details` APIs, adds a resilient request manager, and exposes high-level managers for pages,
+users, revisions, categories, search, metadata, and wiki events.
+
+## Key capabilities
+
+- **Page management** — fetch summaries, content, categories, history, and revert or edit articles in place.
+- **User and revision utilities** — inspect contributor groups, recent changes, and block or rollback activity.
+- **Search and categories** — run relevance queries, list category members, or stitch your own navigation data.
+- **Event polling** — listen to `pageUpdate`, `pageCreate`, `fileUpload`, and `userBlock` events without
+  touching the RecentChanges API yourself.
+- **Node 18+ + ESM** — modern runtime expectations with native `fetch`, `URL`, and top-level `await` support.
+
+<Callout type="info" title="Project status">
+  The code published in this repository is exactly what ships to npm. Every example below is backed by real
+  source files under `src/` so you can trust the behavior described in these docs.
+</Callout>
+
+## Works on any wiki
+
+The client does not hard-code a single community. Point `host` at any Fandom-supported wiki and the managers
+talk to its `/api.php` endpoint. Switching wikis is as simple as changing the host URL.
+
+```ts
+import { Client } from 'fandom.js';
+
+const client = new Client({
+  host: 'https://sonic.fandom.com',
+  apiPath: '/api.php',
+});
+
+const page = await client.pages.fetch('Sonic_the_Hedgehog');
+console.log(page.extract);
+```
+
+## Feature map
+
+| Manager | Description |
+| --- | --- |
+| `pages` | High-level wrapper around queries that pull article text, categories, and revisions with caching. |
+| `users` | Fetch user profiles and contribution lists, then block accounts through the same instance. |
+| `revisions` | Inspect a specific revision ID or gather recent changes for dashboards. |
+| `search` | Call MediaWiki search and get normalized titles back to hydrate your own UI. |
+| `categories` | Enumerate `Category:` members and hydrate them as `Page` structures. |
+| `meta` | Access siteinfo for namespaces, statistics, or general wiki metadata. |
+| `events` | EventEmitter that continuously polls RecentChanges and emits typed events.
+
+## Quick start
+
+```ts
+import { Client } from 'fandom.js';
+
+const client = new Client({
+  host: 'https://wingsoffire.fandom.com',
+  polling: false,
+});
+
+client.events.on('ready', () => console.log('Client ready'));
+client.events.on('pageUpdate', (change) => {
+  console.log(`[${change.timestamp}] ${change.title} edited by ${change.user}`);
+});
+
+await client.login();
+const recent = await client.revisions.fetchRecent(5);
+console.log(recent.map((rev) => rev.title));
+```
+
+## Where to go next
+
+<Cards>
+  <Card
+    title="Installation"
+    description="Set up the client, environment variables, and optional login flow."
+    href="/docs/fandomjs/installation"
+  />
+  <Card
+    title="Core concepts"
+    description="Learn how the client, managers, and event emitter cooperate."
+    href="/docs/fandomjs/core-concepts"
+  />
+  <Card
+    title="Page APIs"
+    description="Dive into fetching, editing, and reverting wiki articles."
+    href="/docs/fandomjs/data-fetching"
+  />
+  <Card
+    title="Runtime tooling"
+    description="Tune configuration, observability, automation, and testing."
+    href="/docs/fandomjs/configuration"
+  />
+</Cards>

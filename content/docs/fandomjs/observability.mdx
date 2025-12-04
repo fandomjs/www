@@ -1,0 +1,78 @@
+---
+title: Observability & Error Handling
+description: Tap into the built-in events and errors to monitor fandom.js in production.
+---
+
+## EventEmitter as a telemetry bus
+
+Every `Client` exposes a typed `events` instance. Subscribe to it to collect metrics or send notifications.
+
+```ts
+client.events.on('ready', () => metrics.increment('fandom.ready'));
+client.events.on('pageFetched', (page) =>
+  metrics.histogram('fandom.page.length', page.extract?.length ?? 0),
+);
+client.events.on('userBlock', (event) =>
+  logger.info({ event }, 'User block detected'),
+);
+```
+
+## Handling API errors
+
+`RequestManager` throws `APIError` whenever MediaWiki responds with an `error` payload.
+
+```ts
+import { APIError } from 'fandom.js';
+
+try {
+  await page.edit('New text');
+} catch (error) {
+  if (error instanceof APIError) {
+    logger.error({ code: error.code, info: error.info }, 'MediaWiki error');
+  } else {
+    logger.error(error, 'Unexpected failure');
+  }
+}
+```
+
+- `error.code` maps to MediaWiki error keys (e.g., `permissiondenied`).
+- `error.info` carries the human-readable explanation from the API response.
+
+## Tracking retries
+
+Wrap the `requestManager.get`/`post` calls to observe retry attempts:
+
+```ts
+const originalGet = client.requestManager.get.bind(client.requestManager);
+client.requestManager.get = async (...args) => {
+  const start = Date.now();
+  try {
+    return await originalGet(...args);
+  } finally {
+    metrics.timing('fandom.request', Date.now() - start);
+  }
+};
+```
+
+Because retries happen inside `RequestManager.request`, timings that look larger than usual are a red flag that
+the remote wiki is slow or returning transient errors.
+
+## Logging poller activity
+
+```ts
+client.events.on('pageUpdate', (change) =>
+  logger.info({ title: change.title, user: change.user }, 'page updated'),
+);
+
+client.events.on('warn', (err) => logger.warn({ err }, 'polling issue'));
+```
+
+If polling fails, the catch block inside `EventManager.poll` logs to `console.error`. Redirect `warn` events to
+your logging platform to make these visible.
+
+## Metrics checklist
+
+- Number of API requests per minute (broken down by manager).
+- Cache hits vs. misses if you extend the caches with custom logic.
+- Duration and status of edit/delete operations.
+- Count of emitted `pageCreate` and `pageUpdate` events when monitoring wiki health.

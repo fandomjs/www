@@ -1,0 +1,20 @@
+{
+  "title": "Fandom.js",
+  "description": "Working with fandom.js.",
+  "root": true,
+  "icon": "Box",
+  "pages": [
+    "---Introduction---",
+    "index",
+    "installation",
+    "core-concepts",
+    "---Managers---",
+    "working-with-pages",
+    "manager-reference",
+    "events",
+    "---Operations---",
+    "configuration",
+    "observability",
+    "automation"
+  ]
+}

@@ -1,0 +1,33 @@
+---
+title: Types Overview
+description: Explore the TypeScript definitions published under the fandom-api-types entry point.
+---
+
+The npm distribution exports every definition inside `src/types`. Importing from `fandom.js` (or the
+`fandom-api-types` subpath) gives you strongly typed responses for MediaWiki queries, RecentChanges events, and
+client options.
+
+```ts
+import type {
+  APIPage,
+  APIUser,
+  APIRevision,
+  ClientOptions,
+  RecentChange,
+  SiteInfo,
+} from 'fandom.js';
+
+export type WikiPage = Pick<APIPage, 'pageid' | 'title' | 'extract'>;
+```
+
+## What is covered?
+
+- `client.ts` — the shape of the constructor options and minimal definition of the `Client` itself.
+- `api.ts` — MediaWiki `query` payloads (`APIResponse`, `QueryParams`, token shapes).
+- `page.ts`, `user.ts`, `revision.ts` — strongly typed interfaces for each structure.
+- `events.ts` — payloads emitted by `EventManager` (`PageSummary`, `RecentChange`, `FileUploadEvent`,
+  `UserBlockEvent`).
+- `site.ts` — `SiteInfo` subsets returned by `client.meta.fetchSiteInfo`.
+
+Use these types to ensure your automation scripts stay in sync with the exact fields the library requests from
+MediaWiki.

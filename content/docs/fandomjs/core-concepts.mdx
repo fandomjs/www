@@ -1,0 +1,98 @@
+---
+title: Core Concepts
+description: Learn how the fandom.js client composes managers, the request layer, structures, and events.
+---
+
+## Client composition
+
+The exported `Client` class (see `src/client/client.ts`) wires up every public surface:
+
+1. Merge the user-supplied `ClientOptions` with safe defaults (`apiPath /api.php`, user agent, retry count,
+   cache size, polling flag).
+2. Instantiate a shared `RequestManager` that owns fetch calls, login tokens, retry logic, and the internal
+   rate limiter.
+3. Construct each manager with a reference to this client so they can reuse the same request pipeline.
+4. Boot an `EventManager` that extends a typed `EventEmitter` and, if `polling` is `true`, immediately starts
+   watching RecentChanges.
+
+```ts
+import { Client } from 'fandom.js';
+
+const client = new Client({
+  host: 'https://sonic.fandom.com',
+  maxRetries: 5,
+});
+
+await client.login();
+client.events.on('ready', () => console.log('Polling for recent changes...'));
+```
+
+## Managers
+
+Every manager inherits from `BaseManager` and exposes purpose-specific methods:
+
+| Manager | Responsibilities |
+| --- | --- |
+| `PageManager` (`client.pages`) | Fetch a page, hydrate a `Page` structure, and fall back to the legacy `Articles/Details` endpoint when an extract is missing. |
+| `UserManager` (`client.users`) | Load user metadata and grab their contributions. |
+| `RevisionManager` (`client.revisions`) | Fetch a specific revision or list recent changes. |
+| `SearchManager` (`client.search`) | Run keyword searches and return page titles. |
+| `CategoryManager` (`client.categories`) | Resolve members for any `Category:` title. |
+| `MetaManager` (`client.meta`) | Call `meta=siteinfo` and return namespaces, statistics, and general settings. |
+
+Each manager returns structured objects (`Page`, `User`, `Revision`) so you can call helper methods like
+`page.edit`, `page.fetchHistory`, or `user.block` without juggling raw JSON.
+
+## Request pipeline
+
+`RequestManager` lives in `src/request/request-manager.ts`. It:
+
+- Builds URLs for `GET` requests (including custom API paths per call).
+- Serializes `POST` bodies as `application/x-www-form-urlencoded`.
+- Retrieves and caches MediaWiki tokens via `TokenType` (login, CSRF, patrol, rollback, etc.).
+- Stores cookies returned by the API so multi-step flows (login → edit) stay authenticated.
+- Applies exponential backoff (`2 ** attempt * 200` ms) on retryable failures and throttles request bursts via
+  a token-bucket `RateLimiter` (5 tokens, 1 refill per second by default).
+
+```ts
+const page = await client.pages.fetch('Sonic_the_Hedgehog');
+await page.edit('New lead section', 'Adjust introduction');
+```
+
+Behind the scenes the `Page` instance reuses `client.requestManager.post` and asks for a CSRF token before
+submitting the edit.
+
+## Event flow
+
+`EventManager` extends `FandomEmitter`, which itself extends `EventEmitter` with strongly typed payloads. The
+manager polls RecentChanges, tracks the most recent timestamp, and emits events for edits, new pages, file
+uploads, and user blocks.
+
+```ts
+client.events.on('pageUpdate', (change) => {
+  console.log(`${change.title} edited by ${change.user}`);
+});
+
+client.events.on('fileUpload', (file) => {
+  console.log(`New file uploaded by ${file.user}`);
+});
+```
+
+Set `client.options.polling = false` if you prefer to manually call `events.startPolling()`.
+
+## Structures and types
+
+- `BaseStructure` stores a reference to the client and defines the `_patch` contract. `Page`, `User`, and
+  `Revision` extend it to keep instances mutable.
+- Rich helper methods (edit, delete, protect, revertTo, block) live on these structures so you always operate
+  with strong types.
+- All REST/MediaWiki responses are typed via the files in `src/types`. Import them directly when you need the
+  raw shape:
+
+```ts
+import type { APIPage, ClientOptions } from 'fandom.js';
+
+function acceptsRawPage(page: APIPage) {
+  // ...
+}
+```

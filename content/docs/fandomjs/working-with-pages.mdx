@@ -1,0 +1,76 @@
+---
+title: Working with Pages
+description: Fetch, cache, edit, and inspect wiki pages through the PageManager and Page structure.
+---
+
+## Fetching a page
+
+```ts
+const page = await client.pages.fetch('Sonic_the_Hedgehog');
+console.log(page.extract);
+```
+
+- The manager calls `action=query` with `prop=extracts|revisions|categories` and automatically follows
+  redirects so you always land on the canonical title.
+- Responses are cached inside an `LRUCache` keyed by `page:<title>`. Adjust `client.options.cacheSize` to
+  change how many entries are stored.
+- When MediaWiki does not return an extract, fandom.js falls back to `Articles/Details` and requests an
+  abstract (`DEFAULT_ABSTRACT_LENGTH` characters) so you still get a summary.
+
+<Callout type="tip">
+  The cache lives on the client instance. Reuse a single `Client` per process to avoid duplicate fetches.
+</Callout>
+
+## Page structure anatomy
+
+`Page` extends `BaseStructure` and patches data as more information becomes available.
+
+| Field | Source |
+| --- | --- |
+| `pageid`, `ns`, `title` | `query.pages[].*` |
+| `extract` | `extracts` prop or `Articles/Details` fallback |
+| `content` | First revision slot content |
+| `categories` | Array of category titles |
+
+```ts
+console.log(page.categories);
+// ['Category:Characters', 'Category:Articles needing cleanup']
+```
+
+## Editing content
+
+```ts
+await page.edit(`New content at ${new Date().toISOString()}`, 'Refresh lead paragraph');
+```
+
+- `Page.edit` issues `action=edit` and automatically requests a CSRF token.
+- Provide an edit summary to leave a paper trail inside MediaWiki.
+
+## Deleting and protecting pages
+
+```ts
+await page.delete('Spam page detected');
+await page.protect(ProtectionLevel.Autoconfirmed, '1 week', 'Lock to autoconfirmed users');
+```
+
+- Protection applies to both edit and move rights via `protections=edit=<level>|move=<level>`.
+- Expiry strings follow MediaWiki syntax (e.g., `infinite`, `2024-12-01T00:00:00Z`).
+
+## Working with history
+
+```ts
+const history = await page.fetchHistory();
+console.log(history[0].user, history[0].timestamp);
+
+await page.revertTo(history.at(-1)!.revid, 'Restore original text');
+```
+
+- `fetchHistory` requests up to 50 revisions and returns `Revision` objects so you can inspect content, user,
+  timestamp, and comments.
+- `revertTo` compares the current revision ID to the one you pass. When they differ it issues an undo edit with
+  `undo`/`undoafter` params.
+
+## Emitting page events
+
+Every successful fetch triggers `client.events.emit('pageFetched', pageSummary)`. Listen to it when you need to
+attach logging or analytics without modifying your application code.

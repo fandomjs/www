@@ -1,0 +1,93 @@
+---
+title: Manager Reference
+description: Use the user, revision, category, search, and metadata managers in real projects.
+---
+
+```ts
+import { Client } from 'fandom.js';
+
+const client = new Client({ host: 'https://sonic.fandom.com' });
+```
+
+## Users
+
+```ts
+const user = await client.users.fetch('Ferotiq');
+console.log(user.groups);
+
+const latest = await client.users.fetchContributions('Ferotiq', 5);
+console.log(latest.map((c) => `${c.title} – ${c.comment}`));
+
+await user.block('2 weeks', 'Spam prevention');
+```
+
+- `fetch` accepts either a username (`string`) or numeric ID.
+- Data is cached per user similar to pages.
+- `fetchContributions` issues `list=usercontribs` and returns raw contribution objects so you can render
+  history feeds.
+
+## Revisions
+
+```ts
+const revision = await client.revisions.fetch(123456);
+console.log(revision.user, revision.comment);
+
+const recent = await client.revisions.fetchRecent(20);
+recent.forEach((rev) => console.log(`${rev.title} -> ${rev.user}`));
+```
+
+- `fetch` requests a specific `revid` and hydrates a `Revision` structure.
+- `fetchRecent` wraps `list=recentchanges` and converts each change into a `Revision` object so you can reuse
+  the same fields (`user`, `comment`, `timestamp`).
+
+## Categories
+
+```ts
+const members = await client.categories.fetchMembers('Category:Administrators', 25);
+console.log(members.map((page) => page.title));
+```
+
+- The manager automatically prefixes `Category:` when needed, so passing `Administrators` works too.
+- Each member is returned as a `Page` instance. Call `member.fetchHistory()` or `member.edit()` if you need
+  to follow up.
+
+## Search
+
+```ts
+const results = await client.search.search('Moonwatcher fan art', 10);
+```
+
+`SearchManager` wraps `list=search` and returns only the `title` field because most callers immediately feed
+the title back into `pages.fetch`.
+
+## Metadata
+
+```ts
+const info = await client.meta.fetchSiteInfo('general|statistics|namespaces');
+console.log(info.general?.sitename, info.statistics?.pages);
+```
+
+- Pass a pipe-delimited string of properties you care about.
+- The return type is `Partial<SiteInfo>` so TypeScript reminds you to null-check optional fields.
+
+## Putting it together
+
+The snippet below uses several managers to produce a human-friendly moderation report:
+
+```ts
+export async function latestModerationActivity(limit = 10) {
+  const recent = await client.revisions.fetchRecent(limit);
+  const meta = await client.meta.fetchSiteInfo('general');
+
+  return recent.map((rev) => ({
+    wiki: meta.general?.sitename ?? client.options.host,
+    page: rev.title,
+    editor: rev.user,
+    summary: rev.comment,
+    timestamp: rev.timestamp,
+  }));
+}
+```
+
+Because every manager shares the same `Client`, authentication, rate limiting, and retry policies stay
+consistent across these calls.

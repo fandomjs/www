@@ -1,0 +1,92 @@
+---
+title: Configuration Reference
+description: Tune Client options, retries, caching, and polling to match your deployment.
+---
+
+## ClientOptions
+
+```ts
+type ClientOptions = {
+  host: string;
+  apiPath?: string;
+  userAgent?: string;
+  maxRetries?: number;
+  cacheSize?: number;
+  polling?: boolean;
+};
+```
+
+- **host** (required) — origin of the wiki you are targeting.
+- **apiPath** (default `/api.php`) — override when the wiki proxies MediaWiki elsewhere.
+- **userAgent** — sets the `User-Agent` header for every request. Defaults to `fandom.js/<version>`.
+- **maxRetries** (default `3`) — upper bound for automatic retries in the request manager.
+- **cacheSize** (default `100`) — capacity of each internal LRU cache (pages, users, revisions).
+- **polling** (default `true`) — start the event poller immediately after `login`/`onReady`.
+
+## Request manager behavior
+
+- Requests funnel through `cross-fetch`, so any runtime with the Fetch standard works.
+- Retries apply exponential backoff (200 ms, 400 ms, 800 ms, ...). When the max is exceeded the promise
+  rejects with the last error.
+- The internal `RateLimiter` ships with `capacity=5` and `refillPerSecond=1`. For extremely chatty workloads,
+  run multiple client instances to distribute pressure.
+
+```ts
+client.requestManager.post(
+  { action: 'edit', title: 'Sandbox', text: 'Hello', format: 'json' },
+  { tokenType: TokenType.Csrf },
+);
+```
+
+`tokenType` instructs the manager to fetch (and cache) the needed CSRF token before attempting the POST.
+
+## Customizing caching
+
+Pages, users, and revisions are memoized via `lru-cache`. Configure the capacity per client:
+
+```ts
+const client = new Client({ host: wiki, cacheSize: 500 });
+```
+
+When you need an external cache, wrap your own logic around the manager methods:
+
+```ts
+import QuickLRU from 'quick-lru';
+
+const cache = new QuickLRU({ maxSize: 1000 });
+
+export async function getPage(title: string) {
+  if (cache.has(title)) return cache.get(title);
+  const page = await client.pages.fetch(title);
+  cache.set(title, page);
+  return page;
+}
+```
+
+## Polling configuration
+
+- Disable polling by passing `polling: false`. You can manually call `client.events.startPolling(intervalMs)`
+  later if you want to control the cadence.
+- Call `client.events.stopPolling()` before shutting down a worker to avoid dangling timers.
+
+## User agents and compliance
+
+Set a descriptive user agent so wiki admins can reach you if your automation misbehaves:
+
+```ts
+const client = new Client({
+  host: wiki,
+  userAgent: 'my-tool/1.0 (contact@example.com)',
+});
+```
+
+## Environment-driven hosts
+
+```ts
+const client = new Client({
+  host: process.env.FANDOM_HOST ?? 'https://community.fandom.com',
+  apiPath: process.env.FANDOM_API_PATH ?? '/api.php',
+});
+```
+
+Keeping hosts and credentials in env vars makes it trivial to target staging vs. production wikis.

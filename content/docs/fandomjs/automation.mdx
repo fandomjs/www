@@ -1,0 +1,106 @@
+---
+title: Automation & CI
+description: Run fandom.js inside cron jobs, GitHub Actions, and ad-hoc maintenance scripts.
+---
+
+## Scheduled maintenance
+
+```ts
+import { Client } from 'fandom.js';
+import cron from 'node-cron';
+
+const client = new Client({ host: process.env.FANDOM_HOST! });
+
+async function bootstrap() {
+  await client.login(process.env.FANDOM_USER, process.env.FANDOM_PASS);
+
+  cron.schedule('*/30 * * * *', async () => {
+    const recent = await client.revisions.fetchRecent(25);
+    for (const rev of recent) {
+      if (rev.comment?.includes('typo')) continue;
+      console.log(`[lint] ${rev.title} edited by ${rev.user}`);
+    }
+  });
+}
+
+bootstrap();
+```
+
+The example above polls recent changes every 30 minutes and logs notable edits. Because polling already happens
+inside `EventManager`, you can also rely on `client.events` instead of a cron schedule when building bots that
+react instantly.
+
+## Content linting
+
+```ts
+const missingCategories: string[] = [];
+const pages = ['Main_Page', 'Policies', 'Template:Infobox'];
+
+async function lintPolicies() {
+  for (const title of pages) {
+    const page = await client.pages.fetch(title);
+    if (!page.categories.some((c) => c.includes('Policies'))) {
+      missingCategories.push(title);
+    }
+  }
+
+  if (missingCategories.length > 0) {
+    console.warn('[lint] add Category:Policies to', missingCategories);
+    process.exitCode = 1;
+  }
+}
+
+lintPolicies();
+```
+
+Running this script in CI prevents accidental category regressions.
+
+## Exporting data
+
+```ts
+import { createWriteStream } from 'node:fs';
+
+const stream = createWriteStream('exports/pages.ndjson');
+
+async function exportMembers() {
+  const members = await client.categories.fetchMembers('Category:Characters', 500);
+  for (const page of members) {
+    stream.write(
+      JSON.stringify({ title: page.title, extract: page.extract ?? '' }) + '\n',
+    );
+  }
+  stream.close();
+}
+
+exportMembers();
+```
+
+Because `Page` objects keep the client reference, you can immediately call `await page.fetchHistory()` later in
+the pipeline without re-instantiating anything.
+
+## GitHub Actions template
+
+```yaml
+name: fandom
+on:
+  push:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+        env:
+          FANDOM_HOST: https://sonic.fandom.com
+```
+
+`pnpm test` runs the full Vitest suite plus the type checker, so you catch regressions before publishing.
+
+## Incident response checklist
+
+1. Use `client.revisions.fetchRecent` to capture the raw changes tied to an outage.
+2. Replay edits by calling `await page.revertTo(revid)` for each affected page.
+3. Block offenders quickly with `await client.users.fetch(user).then((u) => u.block('1 day', 'cleanup'))`.
