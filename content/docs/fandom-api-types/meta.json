@@ -1,6 +1,6 @@
 {
   "title": "fandom-api-types",
-  "description": "Working with fandom-api-types.",
+  "description": "Everything about the fandom-api-types TypeScript definitions.",
   "root": true,
   "icon": "FileBox",
   "pages": [

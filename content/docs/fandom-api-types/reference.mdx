@@ -1,65 +1,90 @@
 ---
 title: Type Reference
-description: Detailed breakdown of the most commonly imported interfaces and enums.
+description: Detailed notes for every namespace exported by fandom-api-types.
 ---
 
-## API primitives
+All exports are available via namespaces:
 
 ```ts
-import type { APIResponse, QueryParams } from 'fandom.js';
+import { Rest, Action, Fandom, Generated, Routes } from 'fandom-api-types';
 ```
 
-- `APIResponse<T>` mirrors the MediaWiki `action=query` envelope. The generic type represents the `query` key.
-- `QueryParams` is a loose record of parameters accepted by `RequestManager.get`/`post`.
+Use the sections below to understand when to reach for each interface.
 
-## Structures
+## Rest namespace
 
-```ts
-import type { APIPage, APIRevision, APIUser } from 'fandom.js';
-```
+`Rest` mirrors `/w/rest.php/v1` responses.
 
-- `APIPage` surfaces `pageid`, namespace, title, extracts, revisions, and categories exactly as MediaWiki sends
-+  them.
-- `APIRevision` includes the raw `*` content as well as slot-aware data for wikis that use Multi-Content Revisions.
-- `APIUser` exposes `userid`, `name`, `groups`, and registration timestamps to help you build moderation tools.
+### Pages & revisions
 
-## Events
+| Type | Highlights |
+| --- | --- |
+| `Rest.MWRestPage` | Represents a complete REST `page` response with `id`, `key`, `title`, `latest`, `revisions`, and optional `content`. |
+| `Rest.MWRevisionSummary` | Slim objects used inside `MWRestPage.revisions`; carries `id`, `timestamp`, and optional `user`/`comment`. |
+| `Rest.MWRevision` | Full revision records for `/revision` endpoints. Includes `anon`, `comment`, and optional full `content`. |
+| `Rest.MWRevisionsResponse` | Envelope around an array of `MWRevision` plus a `total` counter. |
 
-```ts
-import type {
-  PageSummary,
-  RecentChange,
-  FileUploadEvent,
-  UserBlockEvent,
-} from 'fandom.js';
-```
+### Discovery & metadata
 
-These types flow through `client.events` listeners so you always get the correct properties when reacting to
-polling updates.
+| Type | Highlights |
+| --- | --- |
+| `Rest.MWSearchResult` / `Rest.MWSearchResponse` | Shape of `/search` payloads (`snippet`, `revision`, canonical `url`). |
+| `Rest.MWSiteInfo` | Minimal REST site metadata containing `mainPage`, `baseUrl`, `sitename`, `generator`, and `version`. |
 
-## Site info
+### Collections
 
-```ts
-import type { SiteInfo } from 'fandom.js';
-```
+| Type | Highlights |
+| --- | --- |
+| `Rest.MWCategory`, `Rest.MWCategoryPage`, `Rest.MWCategoryResponse` | Model `/category` listings, with nested page entries and pagination totals. |
+| `Rest.MWMedia`, `Rest.MWMediaResponse` | Represent `/media` payloads (images, video, audio) including optional dimensions and byte size. |
+| `Rest.MWUser`, `Rest.MWUsersResponse` | Capture user cards surfaceable via REST (`registration`, `avatar`, group memberships). |
 
-`SiteInfo` is a superset of the objects returned by `meta=siteinfo`. It contains optional `general`, `statistics`,
-`namespaces`, and more. Because every key is optional, TypeScript will remind you to null-check fields before
-using them in your UI.
+## Action namespace
 
-## Enums
+`Action` captures `api.php` responses.
 
-```ts
-import { TokenType, ProtectionLevel, Namespace } from 'fandom.js';
-```
+- `Action.MWQueryPage` / `Action.MWQueryResult` / `Action.MWQueryResponse` – strongly typed envelope for `action=query`. Includes `contentmodel`, `lastrevid`, and optional embedded `Rest.MWRevision` records.
+- `Action.MWRevisionsResponse` – maps `query.pages[PAGEID].revisions` so you can narrow revision metadata fetched via `prop=revisions`.
+- `Action.MWParseResponse` – describes `action=parse` payloads including HTML in `text['*']`, section lists, category metadata, and template/link tables.
+- `Action.MWEditResponse` – returned by `action=edit`, exposing revision IDs, result status, and bookkeeping such as `oldrevid`/`newrevid`.
 
-- `TokenType` lists the valid MediaWiki tokens you can request (`csrf`, `login`, `rollback`, etc.).
-- `ProtectionLevel` maps to built-in MediaWiki protection levels (`sysop`, `autoconfirmed`).
-- `Namespace` gives you numeric namespace constants when building queries.
+## Fandom namespace
 
-## Tips
+For `/api/v1` and internal controllers unique to Fandom.
 
-- Re-export your frequently used types from your own package so application code does not have to remember where
-+  each interface lives.
-- When you stub the API in tests, build helper factories that return `APIResponse` instances. That way you keep
-+  parity with the data shapes fandom.js expects.
+| Type | Notes |
+| --- | --- |
+| `Fandom.FandomArticleDetails` / `Fandom.FandomArticlesResponse` | Article metadata used by curated feeds (`wikiId`, `abstract`, `author`, `lastUpdated`). |
+| `Fandom.FandomDiscussionPost`, `Fandom.FandomDiscussionThread`, `Fandom.FandomDiscussionResponse` | Discussion threads, including `replyTo`, `threadId`, and activity timestamps. |
+| `Fandom.FandomFeedItem`, `Fandom.FandomFeedsResponse` | Activity feed entries with discriminated `type` union (`article`, `discussion`, `news`, `other`). |
+| `Fandom.FandomUser`, `Fandom.FandomUsersResponse` | Lightweight user profiles referencing `groups`, `karma`, optional `avatar`, and total counts. |
+
+## Generated namespace
+
+`Generated` exposes raw, auto-generated TypeScript mirrors of real wiki responses:
+
+- `Generated.MWParseResponse`, `Generated.MWQuerySearchResponse`, and `Generated.MWQuerySiteInfoResponse` provide every optional key discovered in the Action API.
+- `Generated.FandomArticlesDetailsResponse` matches Fandom's `Articles/Details` JSON map structure (IDs as keys with nested metadata).
+- Refresh them with `pnpm generate-types`, which runs `scripts/generate-types.ts` against live sample endpoints. The generator infers JSON Schema via the `inferSchema` helper before piping it through `json-schema-to-typescript`.
+
+Use these when you need complete fidelity (including rarely used fields) or when exploring newly uncovered properties.
+
+## Routes namespace
+
+`Routes` is a plain-object helper that converts wiki bases and parameters into URLs.
+
+| Helper | Signature | Notes |
+| --- | --- | --- |
+| `Routes.rest.page` | `(wikiBase: string, title: string) => string` | Encodes titles and returns `/w/rest.php/v1/page/<title>`. |
+| `Routes.rest.search` | `(wikiBase: string, query: string, limit?: number) => string` | Adds `q`/`limit` as query params. |
+| `Routes.rest.siteInfo` | `(wikiBase: string) => string` | Points to `/metadata/siteinfo`. |
+| `Routes.action.query` | `(wikiBase: string, params: Record<string, string \| number>) => string` | Adds `format=json` automatically. |
+| `Routes.action.parse` | `(wikiBase: string, title: string, options?: { prop?: string }) => string` | Pre-fills `action=parse` and `page` arguments, letting you append `prop` values. |
+| `Routes.action.edit` | `(wikiBase: string, title: string) => string` | Builds `action=edit` URLs for CSRF-protected edits. |
+| `Routes.action.revisions` | `(wikiBase: string, title: string, limit?: number) => string` | Supplies `prop=revisions` and optional `rvlimit`. |
+| `Routes.fandom.articlesDetails` | `(wikiBase: string, ids: number[]) => string` | Serializes ID arrays for `/api/v1/Articles/Details`. |
+| `Routes.fandom.discussionPosts` | `(wikiBase: string, threadId: string, limit?: number) => string` | Targets `DiscussionPost` controller with optional pagination. |
+| `Routes.fandom.userDetails` | `(wikiBase: string, userId: string) => string` | Fetches `/api/v1/User/Details`. |
+| `Routes.fandom.feed` | `(wikiBase: string, type?: string, limit?: number) => string` | Builds `/Activity/Feeds` URL with optional filters. |
+
+Because these helpers only operate on strings, you can call them from the browser, a bot, or a build script without bundling extra dependencies.
