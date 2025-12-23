@@ -26,19 +26,26 @@ description: Assemble polished experiences on top of fandom.js data primitives.
 ## Hero banner
 
 ```tsx
-import Image from 'next/image';
-import { fandom } from '@/fandom-client';
+import Image from "next/image";
+import { fandom } from "@/fandom-client";
 
 export async function Hero({ slug }: { slug: string }) {
   const universe = await fandom.catalog.getUniverse({ slug });
   return (
     <section className="rounded-3xl bg-gradient-to-r from-indigo-600 to-purple-500 text-white p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center">
-        <Image src={universe.cover.url} alt={universe.title} width={320} height={180} />
+        <Image
+          src={universe.cover.url}
+          alt={universe.title}
+          width={320}
+          height={180}
+        />
         <div className="space-y-3">
           <p className="uppercase tracking-wide text-sm">{universe.genre}</p>
           <h1 className="text-4xl font-semibold">{universe.title}</h1>
-          <p className="text-lg text-white/80">{universe.description.slice(0, 140)}...</p>
+          <p className="text-lg text-white/80">
+            {universe.description.slice(0, 140)}...
+          </p>
           <div className="flex gap-3">
             <button className="btn btn--primary">Add to Watchlist</button>
             <button className="btn btn--ghost">View Lore</button>
@@ -53,7 +60,7 @@ export async function Hero({ slug }: { slug: string }) {
 ## Watchlist grid
 
 ```tsx
-import { fandom } from '@/fandom-client';
+import { fandom } from "@/fandom-client";
 
 export async function Watchlist({ fanId }: { fanId: string }) {
   const [watchlist, reactions] = await Promise.all([
@@ -64,12 +71,19 @@ export async function Watchlist({ fanId }: { fanId: string }) {
   return (
     <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {watchlist.items.map((item) => {
-        const reaction = reactions.items.find((entry) => entry.entityId === item.entityId);
+        const reaction = reactions.items.find(
+          (entry) => entry.entityId === item.entityId,
+        );
         return (
-          <li key={item.entityId} className="rounded-2xl border border-white/10 p-4 bg-white/5">
+          <li
+            key={item.entityId}
+            className="rounded-2xl border border-white/10 p-4 bg-white/5"
+          >
             <p className="text-sm text-white/70">{item.type}</p>
             <p className="text-xl font-semibold">{item.metadata.title}</p>
-            <p className="text-sm text-white/60">{reaction?.value ?? 'No reaction yet'}</p>
+            <p className="text-sm text-white/60">
+              {reaction?.value ?? "No reaction yet"}
+            </p>
           </li>
         );
       })}
@@ -81,7 +95,7 @@ export async function Watchlist({ fanId }: { fanId: string }) {
 ## Engagement panel
 
 ```tsx
-import { fandom } from '@/fandom-client';
+import { fandom } from "@/fandom-client";
 
 export async function EngagementPanel({ universeId }: { universeId: string }) {
   const [metrics, sentiment] = await Promise.all([
@@ -95,7 +109,9 @@ export async function EngagementPanel({ universeId }: { universeId: string }) {
       <dl className="mt-4 grid gap-4 sm:grid-cols-3">
         <div>
           <dt className="text-slate-500">Active fans (24h)</dt>
-          <dd className="text-3xl font-bold">{metrics.activeFans24h.toLocaleString()}</dd>
+          <dd className="text-3xl font-bold">
+            {metrics.activeFans24h.toLocaleString()}
+          </dd>
         </div>
         <div>
           <dt className="text-slate-500">Completion rate</dt>
@@ -103,7 +119,7 @@ export async function EngagementPanel({ universeId }: { universeId: string }) {
         </div>
         <div>
           <dt className="text-slate-500">Mood</dt>
-          <dd className="text-3xl font-bold">{sentiment.mode ?? 'Balanced'}</dd>
+          <dd className="text-3xl font-bold">{sentiment.mode ?? "Balanced"}</dd>
         </div>
       </dl>
     </div>
@@ -112,6 +128,6 @@ export async function EngagementPanel({ universeId }: { universeId: string }) {
 ```
 
 <Callout type="tip">
-  Pair these components with the design tokens shipped in `@fandom/theme` to stay aligned with our official
-  product surfaces.
+  Pair these components with the design tokens shipped in `@fandom/theme` to
+  stay aligned with our official product surfaces.
 </Callout>

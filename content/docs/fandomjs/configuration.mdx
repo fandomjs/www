@@ -33,7 +33,7 @@ type ClientOptions = {
 
 ```ts
 client.requestManager.post(
-  { action: 'edit', title: 'Sandbox', text: 'Hello', format: 'json' },
+  { action: "edit", title: "Sandbox", text: "Hello", format: "json" },
   { tokenType: TokenType.Csrf },
 );
 ```
@@ -51,7 +51,7 @@ const client = new Client({ host: wiki, cacheSize: 500 });
 When you need an external cache, wrap your own logic around the manager methods:
 
 ```ts
-import QuickLRU from 'quick-lru';
+import QuickLRU from "quick-lru";
 
 const cache = new QuickLRU({ maxSize: 1000 });
 
@@ -76,7 +76,7 @@ Set a descriptive user agent so wiki admins can reach you if your automation mis
 ```ts
 const client = new Client({
   host: wiki,
-  userAgent: 'my-tool/1.0 (contact@example.com)',
+  userAgent: "my-tool/1.0 (contact@example.com)",
 });
 ```
 
@@ -84,8 +84,8 @@ const client = new Client({
 
 ```ts
 const client = new Client({
-  host: process.env.FANDOM_HOST ?? 'https://community.fandom.com',
-  apiPath: process.env.FANDOM_API_PATH ?? '/api.php',
+  host: process.env.FANDOM_HOST ?? "https://community.fandom.com",
+  apiPath: process.env.FANDOM_API_PATH ?? "/api.php",
 });
 ```
 

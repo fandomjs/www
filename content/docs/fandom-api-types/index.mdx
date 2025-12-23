@@ -49,23 +49,31 @@ bun add fandom-api-types
 
 ## Export map at a glance
 
-| Namespace | Purpose |
-| --- | --- |
-| `Rest` | REST v1 summaries for pages, revisions, search, site info, categories, media, and users. |
-| `Action` | Action API `query`, `parse`, `edit`, and `revisions` envelopes. |
-| `Fandom` | Article, discussion, feed, and user payloads from Fandom-specific endpoints. |
-| `Generated` | Schemas captured from real responses via `scripts/generate-types.ts`. |
-| `Routes` | URL builders for REST, Action, and Fandom endpoints (no network calls involved). |
+| Namespace   | Purpose                                                                                  |
+| ----------- | ---------------------------------------------------------------------------------------- |
+| `Rest`      | REST v1 summaries for pages, revisions, search, site info, categories, media, and users. |
+| `Action`    | Action API `query`, `parse`, `edit`, and `revisions` envelopes.                          |
+| `Fandom`    | Article, discussion, feed, and user payloads from Fandom-specific endpoints.             |
+| `Generated` | Schemas captured from real responses via `scripts/generate-types.ts`.                    |
+| `Routes`    | URL builders for REST, Action, and Fandom endpoints (no network calls involved).         |
 
 Import what you need:
 
 ```ts
-import { Rest, Action, Fandom, Generated, Routes } from 'fandom-api-types';
+import { Rest, Action, Fandom, Generated, Routes } from "fandom-api-types";
 
-const latest: Rest.MWRevisionSummary = { id: 42, timestamp: new Date().toISOString() };
+const latest: Rest.MWRevisionSummary = {
+  id: 42,
+  timestamp: new Date().toISOString(),
+};
 const query: Action.MWQueryResponse = { query: { pages: {} } };
-const article: Fandom.FandomArticleDetails = { id: 1, title: 'Main Page', url: '/wiki/Main_Page', wikiId: 177 };
-const url = Routes.rest.page('https://community.fandom.com', 'Main Page');
+const article: Fandom.FandomArticleDetails = {
+  id: 1,
+  title: "Main Page",
+  url: "/wiki/Main_Page",
+  wikiId: 177,
+};
+const url = Routes.rest.page("https://community.fandom.com", "Main Page");
 ```
 
 ## Type layout
@@ -85,13 +93,19 @@ const url = Routes.rest.page('https://community.fandom.com', 'Main Page');
 `Routes` keeps endpoint construction consistent:
 
 ```ts
-const wiki = 'https://genshin-impact.fandom.com';
+const wiki = "https://genshin-impact.fandom.com";
 
-const restPageUrl = Routes.rest.page(wiki, 'Archon_Quest');
-const searchUrl = Routes.rest.search(wiki, 'Hilichurl', 10);
-const actionQueryUrl = Routes.action.query(wiki, { action: 'query', list: 'search', srsearch: 'lore' });
-const parseUrl = Routes.action.parse(wiki, 'Traveler', { prop: 'text|categories' });
-const discussionUrl = Routes.fandom.discussionPosts(wiki, '12345', 25);
+const restPageUrl = Routes.rest.page(wiki, "Archon_Quest");
+const searchUrl = Routes.rest.search(wiki, "Hilichurl", 10);
+const actionQueryUrl = Routes.action.query(wiki, {
+  action: "query",
+  list: "search",
+  srsearch: "lore",
+});
+const parseUrl = Routes.action.parse(wiki, "Traveler", {
+  prop: "text|categories",
+});
+const discussionUrl = Routes.fandom.discussionPosts(wiki, "12345", 25);
 ```
 
 Each helper handles URL encoding, default params (like `format=json`), and optional arguments (`limit`, `prop`, etc.).

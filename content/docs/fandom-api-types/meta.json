@@ -3,8 +3,5 @@
   "description": "Everything about the fandom-api-types TypeScript definitions.",
   "root": true,
   "icon": "FileBox",
-  "pages": [
-    "index",
-    "reference"
-  ]
+  "pages": ["index", "reference"]
 }

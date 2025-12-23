@@ -4,21 +4,21 @@ description: Use the user, revision, category, search, and metadata managers in 
 ---
 
 ```ts
-import { Client } from 'fandom.js';
+import { Client } from "fandom.js";
 
-const client = new Client({ host: 'https://sonic.fandom.com' });
+const client = new Client({ host: "https://sonic.fandom.com" });
 ```
 
 ## Users
 
 ```ts
-const user = await client.users.fetch('Ferotiq');
+const user = await client.users.fetch("Ferotiq");
 console.log(user.groups);
 
-const latest = await client.users.fetchContributions('Ferotiq', 5);
+const latest = await client.users.fetchContributions("Ferotiq", 5);
 console.log(latest.map((c) => `${c.title} – ${c.comment}`));
 
-await user.block('2 weeks', 'Spam prevention');
+await user.block("2 weeks", "Spam prevention");
 ```
 
 - `fetch` accepts either a username (`string`) or numeric ID.
@@ -43,7 +43,10 @@ recent.forEach((rev) => console.log(`${rev.title} -> ${rev.user}`));
 ## Categories
 
 ```ts
-const members = await client.categories.fetchMembers('Category:Administrators', 25);
+const members = await client.categories.fetchMembers(
+  "Category:Administrators",
+  25,
+);
 console.log(members.map((page) => page.title));
 ```
 
@@ -54,7 +57,7 @@ console.log(members.map((page) => page.title));
 ## Search
 
 ```ts
-const results = await client.search.search('Moonwatcher fan art', 10);
+const results = await client.search.search("Moonwatcher fan art", 10);
 ```
 
 `SearchManager` wraps `list=search` and returns only the `title` field because most callers immediately feed
@@ -63,7 +66,7 @@ the title back into `pages.fetch`.
 ## Metadata
 
 ```ts
-const info = await client.meta.fetchSiteInfo('general|statistics|namespaces');
+const info = await client.meta.fetchSiteInfo("general|statistics|namespaces");
 console.log(info.general?.sitename, info.statistics?.pages);
 ```
 
@@ -77,7 +80,7 @@ The snippet below uses several managers to produce a human-friendly moderation r
 ```ts
 export async function latestModerationActivity(limit = 10) {
   const recent = await client.revisions.fetchRecent(limit);
-  const meta = await client.meta.fetchSiteInfo('general');
+  const meta = await client.meta.fetchSiteInfo("general");
 
   return recent.map((rev) => ({
     wiki: meta.general?.sitename ?? client.options.host,

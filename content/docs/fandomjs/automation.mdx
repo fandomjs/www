@@ -6,18 +6,18 @@ description: Run fandom.js inside cron jobs, GitHub Actions, and ad-hoc maintena
 ## Scheduled maintenance
 
 ```ts
-import { Client } from 'fandom.js';
-import cron from 'node-cron';
+import { Client } from "fandom.js";
+import cron from "node-cron";
 
 const client = new Client({ host: process.env.FANDOM_HOST! });
 
 async function bootstrap() {
   await client.login(process.env.FANDOM_USER, process.env.FANDOM_PASS);
 
-  cron.schedule('*/30 * * * *', async () => {
+  cron.schedule("*/30 * * * *", async () => {
     const recent = await client.revisions.fetchRecent(25);
     for (const rev of recent) {
-      if (rev.comment?.includes('typo')) continue;
+      if (rev.comment?.includes("typo")) continue;
       console.log(`[lint] ${rev.title} edited by ${rev.user}`);
     }
   });
@@ -34,18 +34,18 @@ react instantly.
 
 ```ts
 const missingCategories: string[] = [];
-const pages = ['Main_Page', 'Policies', 'Template:Infobox'];
+const pages = ["Main_Page", "Policies", "Template:Infobox"];
 
 async function lintPolicies() {
   for (const title of pages) {
     const page = await client.pages.fetch(title);
-    if (!page.categories.some((c) => c.includes('Policies'))) {
+    if (!page.categories.some((c) => c.includes("Policies"))) {
       missingCategories.push(title);
     }
   }
 
   if (missingCategories.length > 0) {
-    console.warn('[lint] add Category:Policies to', missingCategories);
+    console.warn("[lint] add Category:Policies to", missingCategories);
     process.exitCode = 1;
   }
 }
@@ -58,15 +58,18 @@ Running this script in CI prevents accidental category regressions.
 ## Exporting data
 
 ```ts
-import { createWriteStream } from 'node:fs';
+import { createWriteStream } from "node:fs";
 
-const stream = createWriteStream('exports/pages.ndjson');
+const stream = createWriteStream("exports/pages.ndjson");
 
 async function exportMembers() {
-  const members = await client.categories.fetchMembers('Category:Characters', 500);
+  const members = await client.categories.fetchMembers(
+    "Category:Characters",
+    500,
+  );
   for (const page of members) {
     stream.write(
-      JSON.stringify({ title: page.title, extract: page.extract ?? '' }) + '\n',
+      JSON.stringify({ title: page.title, extract: page.extract ?? "" }) + "\n",
     );
   }
   stream.close();

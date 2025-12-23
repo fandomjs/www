@@ -16,29 +16,29 @@ The exported `Client` class (see `src/client/client.ts`) wires up every public s
    watching RecentChanges.
 
 ```ts
-import { Client } from 'fandom.js';
+import { Client } from "fandom.js";
 
 const client = new Client({
-  host: 'https://sonic.fandom.com',
+  host: "https://sonic.fandom.com",
   maxRetries: 5,
 });
 
 await client.login();
-client.events.on('ready', () => console.log('Polling for recent changes...'));
+client.events.on("ready", () => console.log("Polling for recent changes..."));
 ```
 
 ## Managers
 
 Every manager inherits from `BaseManager` and exposes purpose-specific methods:
 
-| Manager | Responsibilities |
-| --- | --- |
-| `PageManager` (`client.pages`) | Fetch a page, hydrate a `Page` structure, and fall back to the legacy `Articles/Details` endpoint when an extract is missing. |
-| `UserManager` (`client.users`) | Load user metadata and grab their contributions. |
-| `RevisionManager` (`client.revisions`) | Fetch a specific revision or list recent changes. |
-| `SearchManager` (`client.search`) | Run keyword searches and return page titles. |
-| `CategoryManager` (`client.categories`) | Resolve members for any `Category:` title. |
-| `MetaManager` (`client.meta`) | Call `meta=siteinfo` and return namespaces, statistics, and general settings. |
+| Manager                                 | Responsibilities                                                                                                              |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `PageManager` (`client.pages`)          | Fetch a page, hydrate a `Page` structure, and fall back to the legacy `Articles/Details` endpoint when an extract is missing. |
+| `UserManager` (`client.users`)          | Load user metadata and grab their contributions.                                                                              |
+| `RevisionManager` (`client.revisions`)  | Fetch a specific revision or list recent changes.                                                                             |
+| `SearchManager` (`client.search`)       | Run keyword searches and return page titles.                                                                                  |
+| `CategoryManager` (`client.categories`) | Resolve members for any `Category:` title.                                                                                    |
+| `MetaManager` (`client.meta`)           | Call `meta=siteinfo` and return namespaces, statistics, and general settings.                                                 |
 
 Each manager returns structured objects (`Page`, `User`, `Revision`) so you can call helper methods like
 `page.edit`, `page.fetchHistory`, or `user.block` without juggling raw JSON.
@@ -55,8 +55,8 @@ Each manager returns structured objects (`Page`, `User`, `Revision`) so you can 
   a token-bucket `RateLimiter` (5 tokens, 1 refill per second by default).
 
 ```ts
-const page = await client.pages.fetch('Sonic_the_Hedgehog');
-await page.edit('New lead section', 'Adjust introduction');
+const page = await client.pages.fetch("Sonic_the_Hedgehog");
+await page.edit("New lead section", "Adjust introduction");
 ```
 
 Behind the scenes the `Page` instance reuses `client.requestManager.post` and asks for a CSRF token before
@@ -69,11 +69,11 @@ manager polls RecentChanges, tracks the most recent timestamp, and emits events 
 uploads, and user blocks.
 
 ```ts
-client.events.on('pageUpdate', (change) => {
+client.events.on("pageUpdate", (change) => {
   console.log(`${change.title} edited by ${change.user}`);
 });
 
-client.events.on('fileUpload', (file) => {
+client.events.on("fileUpload", (file) => {
   console.log(`New file uploaded by ${file.user}`);
 });
 ```
@@ -90,7 +90,7 @@ Set `client.options.polling = false` if you prefer to manually call `events.star
   raw shape:
 
 ```ts
-import type { APIPage, ClientOptions } from 'fandom.js';
+import type { APIPage, ClientOptions } from "fandom.js";
 
 function acceptsRawPage(page: APIPage) {
   // ...

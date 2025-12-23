@@ -6,26 +6,31 @@
     "build": "next build",
     "dev": "next dev",
     "start": "next start",
+    "format": "prettier --write .",
     "types:check": "fumadocs-mdx && tsc --noEmit",
     "postinstall": "fumadocs-mdx"
   },
   "dependencies": {
-    "fumadocs-core": "16.1.0",
-    "fumadocs-mdx": "14.0.3",
-    "fumadocs-ui": "16.1.0",
-    "lucide-react": "^0.552.0",
-    "next": "16.0.1",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "algoliasearch": "^5.46.2",
+    "class-variance-authority": "^0.7.1",
+    "fumadocs-core": "16.3.2",
+    "fumadocs-mdx": "14.2.2",
+    "fumadocs-ui": "16.3.2",
+    "lucide-react": "^0.562.0",
+    "next": "16.1.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.16",
+    "@tailwindcss/postcss": "^4.1.18",
     "@types/mdx": "^2.0.13",
-    "@types/node": "^24.10.0",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
+    "@types/node": "^25.0.3",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
     "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.16",
+    "prettier": "^3.7.4",
+    "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3"
   }
 }

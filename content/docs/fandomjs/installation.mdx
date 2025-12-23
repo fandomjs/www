@@ -51,11 +51,11 @@ installing.
 ## Configure the client
 
 ```ts
-import { Client } from 'fandom.js';
+import { Client } from "fandom.js";
 
 export const client = new Client({
-  host: 'https://wingsoffire.fandom.com',
-  apiPath: '/api.php',
+  host: "https://sonic.fandom.com",
+  apiPath: "/api.php",
   polling: true,
   cacheSize: 250,
 });
@@ -70,8 +70,10 @@ export const client = new Client({
 
 ```ts
 async function bootstrap() {
-  await client.login('BotAccount', process.env.FANDOM_PASSWORD);
-  client.events.on('ready', () => console.log('Logged in and polling RecentChanges'));
+  await client.login("BotAccount", process.env.FANDOM_PASSWORD);
+  client.events.on("ready", () =>
+    console.log("Logged in and polling RecentChanges"),
+  );
 }
 
 bootstrap();
@@ -84,10 +86,10 @@ the same session.
 ## Verify the connection
 
 ```ts
-const summary = await client.meta.fetchSiteInfo('general|statistics');
+const summary = await client.meta.fetchSiteInfo("general|statistics");
 console.log(summary.general?.sitename);
 
-const searchResults = await client.search.search('Moonwatcher', 3);
+const searchResults = await client.search.search("Moonwatcher", 3);
 console.log(searchResults);
 ```
 

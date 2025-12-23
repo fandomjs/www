@@ -8,12 +8,12 @@ description: Tap into the built-in events and errors to monitor fandom.js in pro
 Every `Client` exposes a typed `events` instance. Subscribe to it to collect metrics or send notifications.
 
 ```ts
-client.events.on('ready', () => metrics.increment('fandom.ready'));
-client.events.on('pageFetched', (page) =>
-  metrics.histogram('fandom.page.length', page.extract?.length ?? 0),
+client.events.on("ready", () => metrics.increment("fandom.ready"));
+client.events.on("pageFetched", (page) =>
+  metrics.histogram("fandom.page.length", page.extract?.length ?? 0),
 );
-client.events.on('userBlock', (event) =>
-  logger.info({ event }, 'User block detected'),
+client.events.on("userBlock", (event) =>
+  logger.info({ event }, "User block detected"),
 );
 ```
 
@@ -22,15 +22,15 @@ client.events.on('userBlock', (event) =>
 `RequestManager` throws `APIError` whenever MediaWiki responds with an `error` payload.
 
 ```ts
-import { APIError } from 'fandom.js';
+import { APIError } from "fandom.js";
 
 try {
-  await page.edit('New text');
+  await page.edit("New text");
 } catch (error) {
   if (error instanceof APIError) {
-    logger.error({ code: error.code, info: error.info }, 'MediaWiki error');
+    logger.error({ code: error.code, info: error.info }, "MediaWiki error");
   } else {
-    logger.error(error, 'Unexpected failure');
+    logger.error(error, "Unexpected failure");
   }
 }
 ```
@@ -49,7 +49,7 @@ client.requestManager.get = async (...args) => {
   try {
     return await originalGet(...args);
   } finally {
-    metrics.timing('fandom.request', Date.now() - start);
+    metrics.timing("fandom.request", Date.now() - start);
   }
 };
 ```
@@ -60,11 +60,11 @@ the remote wiki is slow or returning transient errors.
 ## Logging poller activity
 
 ```ts
-client.events.on('pageUpdate', (change) =>
-  logger.info({ title: change.title, user: change.user }, 'page updated'),
+client.events.on("pageUpdate", (change) =>
+  logger.info({ title: change.title, user: change.user }, "page updated"),
 );
 
-client.events.on('warn', (err) => logger.warn({ err }, 'polling issue'));
+client.events.on("warn", (err) => logger.warn({ err }, "polling issue"));
 ```
 
 If polling fails, the catch block inside `EventManager.poll` logs to `console.error`. Redirect `warn` events to

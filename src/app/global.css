@@ -1,6 +1,6 @@
-@import 'tailwindcss';
-@import 'fumadocs-ui/css/solar.css';
-@import 'fumadocs-ui/css/preset.css';
+@import "tailwindcss";
+@import "fumadocs-ui/css/black.css";
+@import "fumadocs-ui/css/preset.css";
 
 @theme {
   --color-fd-background: hsl(0, 0%, 96%);
@@ -22,7 +22,7 @@
 }
 
 .dark {
-  --color-fd-background: hsl(0, 0%, 7.04%);
+  --color-fd-background: hsl(0, 0%, 5.04%);
   --color-fd-foreground: hsl(0, 0%, 92%);
   --color-fd-muted: hsl(0, 0%, 12.9%);
   --color-fd-muted-foreground: hsla(0, 0%, 70%, 0.8);

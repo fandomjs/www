@@ -6,7 +6,7 @@ description: Fetch, cache, edit, and inspect wiki pages through the PageManager 
 ## Fetching a page
 
 ```ts
-const page = await client.pages.fetch('Sonic_the_Hedgehog');
+const page = await client.pages.fetch("Sonic_the_Hedgehog");
 console.log(page.extract);
 ```
 
@@ -18,19 +18,20 @@ console.log(page.extract);
   abstract (`DEFAULT_ABSTRACT_LENGTH` characters) so you still get a summary.
 
 <Callout type="tip">
-  The cache lives on the client instance. Reuse a single `Client` per process to avoid duplicate fetches.
+  The cache lives on the client instance. Reuse a single `Client` per process to
+  avoid duplicate fetches.
 </Callout>
 
 ## Page structure anatomy
 
 `Page` extends `BaseStructure` and patches data as more information becomes available.
 
-| Field | Source |
-| --- | --- |
-| `pageid`, `ns`, `title` | `query.pages[].*` |
-| `extract` | `extracts` prop or `Articles/Details` fallback |
-| `content` | First revision slot content |
-| `categories` | Array of category titles |
+| Field                   | Source                                         |
+| ----------------------- | ---------------------------------------------- |
+| `pageid`, `ns`, `title` | `query.pages[].*`                              |
+| `extract`               | `extracts` prop or `Articles/Details` fallback |
+| `content`               | First revision slot content                    |
+| `categories`            | Array of category titles                       |
 
 ```ts
 console.log(page.categories);
@@ -40,7 +41,10 @@ console.log(page.categories);
 ## Editing content
 
 ```ts
-await page.edit(`New content at ${new Date().toISOString()}`, 'Refresh lead paragraph');
+await page.edit(
+  `New content at ${new Date().toISOString()}`,
+  "Refresh lead paragraph",
+);
 ```
 
 - `Page.edit` issues `action=edit` and automatically requests a CSRF token.
@@ -49,8 +53,12 @@ await page.edit(`New content at ${new Date().toISOString()}`, 'Refresh lead para
 ## Deleting and protecting pages
 
 ```ts
-await page.delete('Spam page detected');
-await page.protect(ProtectionLevel.Autoconfirmed, '1 week', 'Lock to autoconfirmed users');
+await page.delete("Spam page detected");
+await page.protect(
+  ProtectionLevel.Autoconfirmed,
+  "1 week",
+  "Lock to autoconfirmed users",
+);
 ```
 
 - Protection applies to both edit and move rights via `protections=edit=<level>|move=<level>`.
@@ -62,7 +70,7 @@ await page.protect(ProtectionLevel.Autoconfirmed, '1 week', 'Lock to autoconfirm
 const history = await page.fetchHistory();
 console.log(history[0].user, history[0].timestamp);
 
-await page.revertTo(history.at(-1)!.revid, 'Restore original text');
+await page.revertTo(history.at(-1)!.revid, "Restore original text");
 ```
 
 - `fetchHistory` requests up to 50 revisions and returns `Revision` objects so you can inspect content, user,

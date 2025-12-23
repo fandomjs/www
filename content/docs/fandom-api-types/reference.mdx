@@ -6,7 +6,7 @@ description: Detailed notes for every namespace exported by fandom-api-types.
 All exports are available via namespaces:
 
 ```ts
-import { Rest, Action, Fandom, Generated, Routes } from 'fandom-api-types';
+import { Rest, Action, Fandom, Generated, Routes } from "fandom-api-types";
 ```
 
 Use the sections below to understand when to reach for each interface.
@@ -17,27 +17,27 @@ Use the sections below to understand when to reach for each interface.
 
 ### Pages & revisions
 
-| Type | Highlights |
-| --- | --- |
-| `Rest.MWRestPage` | Represents a complete REST `page` response with `id`, `key`, `title`, `latest`, `revisions`, and optional `content`. |
-| `Rest.MWRevisionSummary` | Slim objects used inside `MWRestPage.revisions`; carries `id`, `timestamp`, and optional `user`/`comment`. |
-| `Rest.MWRevision` | Full revision records for `/revision` endpoints. Includes `anon`, `comment`, and optional full `content`. |
-| `Rest.MWRevisionsResponse` | Envelope around an array of `MWRevision` plus a `total` counter. |
+| Type                       | Highlights                                                                                                           |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `Rest.MWRestPage`          | Represents a complete REST `page` response with `id`, `key`, `title`, `latest`, `revisions`, and optional `content`. |
+| `Rest.MWRevisionSummary`   | Slim objects used inside `MWRestPage.revisions`; carries `id`, `timestamp`, and optional `user`/`comment`.           |
+| `Rest.MWRevision`          | Full revision records for `/revision` endpoints. Includes `anon`, `comment`, and optional full `content`.            |
+| `Rest.MWRevisionsResponse` | Envelope around an array of `MWRevision` plus a `total` counter.                                                     |
 
 ### Discovery & metadata
 
-| Type | Highlights |
-| --- | --- |
-| `Rest.MWSearchResult` / `Rest.MWSearchResponse` | Shape of `/search` payloads (`snippet`, `revision`, canonical `url`). |
-| `Rest.MWSiteInfo` | Minimal REST site metadata containing `mainPage`, `baseUrl`, `sitename`, `generator`, and `version`. |
+| Type                                            | Highlights                                                                                           |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `Rest.MWSearchResult` / `Rest.MWSearchResponse` | Shape of `/search` payloads (`snippet`, `revision`, canonical `url`).                                |
+| `Rest.MWSiteInfo`                               | Minimal REST site metadata containing `mainPage`, `baseUrl`, `sitename`, `generator`, and `version`. |
 
 ### Collections
 
-| Type | Highlights |
-| --- | --- |
-| `Rest.MWCategory`, `Rest.MWCategoryPage`, `Rest.MWCategoryResponse` | Model `/category` listings, with nested page entries and pagination totals. |
-| `Rest.MWMedia`, `Rest.MWMediaResponse` | Represent `/media` payloads (images, video, audio) including optional dimensions and byte size. |
-| `Rest.MWUser`, `Rest.MWUsersResponse` | Capture user cards surfaceable via REST (`registration`, `avatar`, group memberships). |
+| Type                                                                | Highlights                                                                                      |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `Rest.MWCategory`, `Rest.MWCategoryPage`, `Rest.MWCategoryResponse` | Model `/category` listings, with nested page entries and pagination totals.                     |
+| `Rest.MWMedia`, `Rest.MWMediaResponse`                              | Represent `/media` payloads (images, video, audio) including optional dimensions and byte size. |
+| `Rest.MWUser`, `Rest.MWUsersResponse`                               | Capture user cards surfaceable via REST (`registration`, `avatar`, group memberships).          |
 
 ## Action namespace
 
@@ -52,12 +52,12 @@ Use the sections below to understand when to reach for each interface.
 
 For `/api/v1` and internal controllers unique to Fandom.
 
-| Type | Notes |
-| --- | --- |
-| `Fandom.FandomArticleDetails` / `Fandom.FandomArticlesResponse` | Article metadata used by curated feeds (`wikiId`, `abstract`, `author`, `lastUpdated`). |
-| `Fandom.FandomDiscussionPost`, `Fandom.FandomDiscussionThread`, `Fandom.FandomDiscussionResponse` | Discussion threads, including `replyTo`, `threadId`, and activity timestamps. |
-| `Fandom.FandomFeedItem`, `Fandom.FandomFeedsResponse` | Activity feed entries with discriminated `type` union (`article`, `discussion`, `news`, `other`). |
-| `Fandom.FandomUser`, `Fandom.FandomUsersResponse` | Lightweight user profiles referencing `groups`, `karma`, optional `avatar`, and total counts. |
+| Type                                                                                              | Notes                                                                                             |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `Fandom.FandomArticleDetails` / `Fandom.FandomArticlesResponse`                                   | Article metadata used by curated feeds (`wikiId`, `abstract`, `author`, `lastUpdated`).           |
+| `Fandom.FandomDiscussionPost`, `Fandom.FandomDiscussionThread`, `Fandom.FandomDiscussionResponse` | Discussion threads, including `replyTo`, `threadId`, and activity timestamps.                     |
+| `Fandom.FandomFeedItem`, `Fandom.FandomFeedsResponse`                                             | Activity feed entries with discriminated `type` union (`article`, `discussion`, `news`, `other`). |
+| `Fandom.FandomUser`, `Fandom.FandomUsersResponse`                                                 | Lightweight user profiles referencing `groups`, `karma`, optional `avatar`, and total counts.     |
 
 ## Generated namespace
 
@@ -73,18 +73,18 @@ Use these when you need complete fidelity (including rarely used fields) or when
 
 `Routes` is a plain-object helper that converts wiki bases and parameters into URLs.
 
-| Helper | Signature | Notes |
-| --- | --- | --- |
-| `Routes.rest.page` | `(wikiBase: string, title: string) => string` | Encodes titles and returns `/w/rest.php/v1/page/<title>`. |
-| `Routes.rest.search` | `(wikiBase: string, query: string, limit?: number) => string` | Adds `q`/`limit` as query params. |
-| `Routes.rest.siteInfo` | `(wikiBase: string) => string` | Points to `/metadata/siteinfo`. |
-| `Routes.action.query` | `(wikiBase: string, params: Record<string, string \| number>) => string` | Adds `format=json` automatically. |
-| `Routes.action.parse` | `(wikiBase: string, title: string, options?: { prop?: string }) => string` | Pre-fills `action=parse` and `page` arguments, letting you append `prop` values. |
-| `Routes.action.edit` | `(wikiBase: string, title: string) => string` | Builds `action=edit` URLs for CSRF-protected edits. |
-| `Routes.action.revisions` | `(wikiBase: string, title: string, limit?: number) => string` | Supplies `prop=revisions` and optional `rvlimit`. |
-| `Routes.fandom.articlesDetails` | `(wikiBase: string, ids: number[]) => string` | Serializes ID arrays for `/api/v1/Articles/Details`. |
-| `Routes.fandom.discussionPosts` | `(wikiBase: string, threadId: string, limit?: number) => string` | Targets `DiscussionPost` controller with optional pagination. |
-| `Routes.fandom.userDetails` | `(wikiBase: string, userId: string) => string` | Fetches `/api/v1/User/Details`. |
-| `Routes.fandom.feed` | `(wikiBase: string, type?: string, limit?: number) => string` | Builds `/Activity/Feeds` URL with optional filters. |
+| Helper                          | Signature                                                                  | Notes                                                                            |
+| ------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `Routes.rest.page`              | `(wikiBase: string, title: string) => string`                              | Encodes titles and returns `/w/rest.php/v1/page/<title>`.                        |
+| `Routes.rest.search`            | `(wikiBase: string, query: string, limit?: number) => string`              | Adds `q`/`limit` as query params.                                                |
+| `Routes.rest.siteInfo`          | `(wikiBase: string) => string`                                             | Points to `/metadata/siteinfo`.                                                  |
+| `Routes.action.query`           | `(wikiBase: string, params: Record<string, string \| number>) => string`   | Adds `format=json` automatically.                                                |
+| `Routes.action.parse`           | `(wikiBase: string, title: string, options?: { prop?: string }) => string` | Pre-fills `action=parse` and `page` arguments, letting you append `prop` values. |
+| `Routes.action.edit`            | `(wikiBase: string, title: string) => string`                              | Builds `action=edit` URLs for CSRF-protected edits.                              |
+| `Routes.action.revisions`       | `(wikiBase: string, title: string, limit?: number) => string`              | Supplies `prop=revisions` and optional `rvlimit`.                                |
+| `Routes.fandom.articlesDetails` | `(wikiBase: string, ids: number[]) => string`                              | Serializes ID arrays for `/api/v1/Articles/Details`.                             |
+| `Routes.fandom.discussionPosts` | `(wikiBase: string, threadId: string, limit?: number) => string`           | Targets `DiscussionPost` controller with optional pagination.                    |
+| `Routes.fandom.userDetails`     | `(wikiBase: string, userId: string) => string`                             | Fetches `/api/v1/User/Details`.                                                  |
+| `Routes.fandom.feed`            | `(wikiBase: string, type?: string, limit?: number) => string`              | Builds `/Activity/Feeds` URL with optional filters.                              |
 
 Because these helpers only operate on strings, you can call them from the browser, a bot, or a build script without bundling extra dependencies.
