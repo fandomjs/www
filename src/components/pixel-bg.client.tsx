@@ -183,7 +183,7 @@ export default function PixelBackground({ className }: { className?: string }) {
     <canvas
       ref={canvasRef}
       className={
-        "absolute inset-0 z-0 rounded-[3rem] pointer-events-none overflow-hidden " +
+        "absolute inset-0 z-0 rounded-2xl md:rounded-[3rem] pointer-events-none overflow-hidden " +
         (className || "")
       }
       aria-hidden
