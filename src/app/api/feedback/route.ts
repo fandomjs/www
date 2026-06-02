@@ -1,15 +1,56 @@
-import { url } from "inspector";
-
 export const POST = async (request: Request) => {
   try {
     const body = await request.json();
-    const { opinion, message, url: pagePath } = body ?? {};
+    const { opinion, message, url: pagePath, turnstileToken } = body ?? {};
 
     const webhook = process.env.DISCORD_WEBHOOK_URL;
     if (!webhook) {
       return new Response(
         JSON.stringify({ error: "Missing DISCORD_WEBHOOK_URL env var" }),
         { status: 500, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    // Verify Turnstile token
+    const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY;
+    if (!turnstileSecretKey) {
+      return new Response(
+        JSON.stringify({ error: "Missing TURNSTILE_SECRET_KEY env var" }),
+        { status: 500, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    if (!turnstileToken) {
+      return new Response(
+        JSON.stringify({ error: "Turnstile token missing" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    const turnstileVerifyUrl = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+    const turnstileResponse = await fetch(turnstileVerifyUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        secret: turnstileSecretKey,
+        response: turnstileToken,
+      }),
+    });
+
+    if (!turnstileResponse.ok) {
+      return new Response(
+        JSON.stringify({ error: "Turnstile verification failed" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    const turnstileData = (await turnstileResponse.json()) as {
+      success?: boolean;
+    };
+    if (!turnstileData.success) {
+      return new Response(
+        JSON.stringify({ error: "Turnstile verification unsuccessful" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
 
@@ -48,7 +89,7 @@ export const POST = async (request: Request) => {
     }
 
     return new Response(
-      JSON.stringify({ message: "Feedback forwarded to Discord" }),
+      JSON.stringify({ message: "Thank you for your feedback!" }),
       { status: 200, headers: { "Content-Type": "application/json" } },
     );
   } catch (err) {

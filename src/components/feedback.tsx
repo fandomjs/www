@@ -2,13 +2,27 @@
 import { cn } from "../lib/cn";
 import { buttonVariants } from "./ui/button";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
-import { type SyntheticEvent, useEffect, useState, useTransition } from "react";
+import { type SyntheticEvent, useEffect, useRef, useState, useTransition } from "react";
 import {
   Collapsible,
   CollapsibleContent,
 } from "fumadocs-ui/components/ui/collapsible";
 import { cva } from "class-variance-authority";
 import { usePathname } from "next/navigation";
+
+declare global {
+  interface Window {
+    turnstile: {
+      render: (
+        element: HTMLElement | string,
+        options: Record<string, unknown>,
+      ) => string;
+      reset: (widgetId?: string) => void;
+      remove: (widgetId?: string) => void;
+      getResponse: (widgetId?: string) => string | undefined;
+    };
+  }
+}
 
 const rateButtonVariants = cva(
   "inline-flex items-center gap-2 px-3 py-2 rounded-full font-medium border text-sm [&_svg]:size-4 disabled:cursor-not-allowed",
@@ -29,7 +43,7 @@ export interface Feedback {
 }
 
 export interface ActionResponse {
-  githubUrl: string;
+  message: string;
 }
 
 interface Result extends Feedback {
@@ -46,6 +60,7 @@ export function Feedback({
   const [opinion, setOpinion] = useState<"good" | "bad" | null>(null);
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
+  const turnstileRef = useRef<string | null>(null);
 
   useEffect(() => {
     const item = localStorage.getItem(`docs-feedback-${url}`);
@@ -53,6 +68,30 @@ export function Feedback({
     if (item === null) return;
     setPrevious(JSON.parse(item) as Result);
   }, [url]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.turnstile) return;
+    if (opinion === null || previous !== null) return;
+
+    // Render Turnstile widget when opinion is selected and no previous feedback
+    const container = document.getElementById("turnstile-container");
+    if (container && !turnstileRef.current) {
+      const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+      if (siteKey) {
+        turnstileRef.current = window.turnstile.render(container, {
+          sitekey: siteKey,
+          theme: "light",
+        });
+      }
+    }
+
+    return () => {
+      if (turnstileRef.current && window.turnstile) {
+        window.turnstile.remove(turnstileRef.current);
+        turnstileRef.current = null;
+      }
+    };
+  }, [opinion, previous]);
 
   useEffect(() => {
     const key = `docs-feedback-${url}`;
@@ -65,18 +104,31 @@ export function Feedback({
     if (opinion == null) return;
 
     startTransition(async () => {
+      const turnstileToken =
+        turnstileRef.current && window.turnstile
+          ? window.turnstile.getResponse(turnstileRef.current)
+          : undefined;
+
+      if (!turnstileToken) {
+        console.error("Turnstile verification required");
+        return;
+      }
+
       const feedback: Feedback = {
         opinion,
         message,
       };
 
-      void onRateAction(url, feedback).then((response) => {
+      void onRateAction(url, feedback, turnstileToken).then((response) => {
         setPrevious({
           response,
           ...feedback,
         });
         setMessage("");
         setOpinion(null);
+        if (turnstileRef.current && window.turnstile) {
+          window.turnstile.reset(turnstileRef.current);
+        }
       });
     });
 
@@ -159,8 +211,7 @@ export function Feedback({
                   submit(e);
                 }
               }}
-            />
-            <button
+            />            <div id=\"turnstile-container\" />            <button
               type="submit"
               className={cn(buttonVariants({ color: "outline" }), "w-fit px-3")}
               disabled={isPending}

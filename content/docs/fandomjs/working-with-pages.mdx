@@ -82,3 +82,11 @@ await page.revertTo(history.at(-1)!.revid, "Restore original text");
 
 Every successful fetch triggers `client.events.emit('pageFetched', pageSummary)`. Listen to it when you need to
 attach logging or analytics without modifying your application code.
+
+## Fetching images
+
+```ts
+const images = await page.images();
+console.log(images[0].title, images[0].url);
+```
+- `Page.images` fetches all images used on the page and returns an array of objects containing the image title, the URL and metadata.
