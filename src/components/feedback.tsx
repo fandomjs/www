@@ -53,7 +53,7 @@ interface Result extends Feedback {
 export function Feedback({
   onRateAction,
 }: {
-  onRateAction: (url: string, feedback: Feedback) => Promise<ActionResponse>;
+  onRateAction: (url: string, feedback: Feedback, turnstileToken: string) => Promise<ActionResponse>;
 }) {
   const url = usePathname();
   const [previous, setPrevious] = useState<Result | null>(null);
